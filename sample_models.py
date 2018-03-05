@@ -25,7 +25,7 @@ def rnn_model(input_dim, units, activation, output_dim=29):
     # Main acoustic input
     input_data = Input(name='the_input', shape=(None, input_dim))
     # Add recurrent layer
-    simp_rnn = GRU(units, activation=activation,
+    simp_rnn = GRU(units, activation='activation',
         return_sequences=True, implementation=2, name='rnn')(input_data)
     # TODO: Add batch normalization 
     bn_rnn = BatchNormalization()(simp_rnn)
@@ -58,9 +58,11 @@ def cnn_rnn_model(input_dim, filters, kernel_size, conv_stride,
     simp_rnn = SimpleRNN(units, activation='relu',
         return_sequences=True, implementation=2, name='rnn')(bn_cnn)
     # TODO: Add batch normalization
-    bn_rnn = ...
+#    bn_rnn = ...
+    bn_rnn = BatchNormalization()(simp_rnn)
     # TODO: Add a TimeDistributed(Dense(output_dim)) layer
-    time_dense = ...
+#    time_dense = ...
+    time_dense = TimeDistributed(Dense(output_dim))(bn_rnn)
     # Add softmax activation layer
     y_pred = Activation('softmax', name='softmax')(time_dense)
     # Specify the model
@@ -97,12 +99,18 @@ def deep_rnn_model(input_dim, units, recur_layers, output_dim=29):
     """
     # Main acoustic input
     input_data = Input(name='the_input', shape=(None, input_dim))
+    deep_rnn = input_data
     # TODO: Add recurrent layers, each with batch normalization
-    ...
-    # TODO: Add a TimeDistributed(Dense(output_dim)) layer
-    time_dense = ...
+#    ...
+    for _ in range(recur_layers):
+        deep_rnn = GRU(units, activation='relu',
+            return_sequences=True, implementation=2)(deep_rnn)
+        deep_rnn = BatchNormalization()(deep_rnn)
+        # TODO: Add a TimeDistributed(Dense(output_dim)) layer
+        #    time_dense = ...
+        deep_rnn = TimeDistributed(Dense(output_dim))(deep_rnn)
     # Add softmax activation layer
-    y_pred = Activation('softmax', name='softmax')(time_dense)
+    y_pred = Activation('softmax', name='softmax')(deep_rnn)
     # Specify the model
     model = Model(inputs=input_data, outputs=y_pred)
     model.output_length = lambda x: x
